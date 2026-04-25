@@ -1,18 +1,28 @@
 # Intelligent Deadlift Diagnosis System
 
-A macOS desktop application that automatically analyzes deadlift videos — detecting repetitions, classifying movement faults per rep, and generating coaching feedback.
+A macOS desktop application that analyzes deadlift videos using computer vision and machine learning — automatically detecting repetitions, classifying movement faults, and delivering coaching feedback.
+
+![Python](https://img.shields.io/badge/Python-3.12-blue)
+![PyQt5](https://img.shields.io/badge/PyQt5-5.15-green)
+![PyTorch](https://img.shields.io/badge/PyTorch-2.8-orange)
+![Platform](https://img.shields.io/badge/Platform-macOS-lightgrey)
 
 ---
 
-## Overview
+## Demo
 
-Upload a deadlift video and the system will:
+| Upload & Analyze | Results |
+|---|---|
+| Drag-and-drop a video and click Analyze | Per-rep fault badges, nose trajectory chart, and coaching feedback |
 
-1. **Detect repetitions** — scans nose Y-coordinate and equipment motion to segment each rep
-2. **Classify movement** — runs pose estimation + segmentation + ML models on 20 sampled frames per rep
-3. **Generate feedback** — rule-based coaching text based on detected fault patterns
+---
 
-Each rep is classified into a 4-class vector `[correct, hip_first, knee_dominant, rounded_back]`.
+## How It Works
+
+1. **Scan** — YOLOv11s-pose tracks the nose Y-coordinate across the entire video; YOLOv11s-gymequipment tracks the barbell/kettlebell. Peak detection on the nose signal segments the video into individual reps.
+2. **Extract** — 20 frames are sampled per rep. Pose keypoints (30-dim) and back-curvature features (3-dim) are extracted via pose estimation and segmentation.
+3. **Classify** — A cross-attention Transformer (TF1 → TF2) classifies hip and knee faults; XGBoost classifies rounded back. Each rep receives a 4-class label `[correct, hip_first, knee_dominant, rounded_back]`.
+4. **Feedback** — Rule-based coaching text is generated, with beginning / middle / end voting for sets of 3+ reps.
 
 ---
 
@@ -20,137 +30,78 @@ Each rep is classified into a 4-class vector `[correct, hip_first, knee_dominant
 
 - Drag-and-drop or browse video upload (MP4, MOV, AVI, MKV)
 - Frame-accurate video player with scrubbing
-- **Nose Trajectory chart** — nose Y-coordinate over time, synced with video playback; dashed lines mark rep boundaries
-- Per-rep result cards with duration and fault badges
-- Rule-based feedback with beginning / middle / end voting for sets ≥ 3 reps
+- **Nose Trajectory chart** — nose Y-coordinate over time, synced with playback; amber dashed lines mark rep boundaries
+- Per-rep result cards showing duration and fault badges
+- Coaching feedback panel
 - Upload history with rename, delete, and re-analyze
-- Double-clickable `.app` launcher for macOS
+- Double-clickable macOS `.app` launcher
 
 ---
 
-## Tech Stack
+## Requirements
 
-| Layer | Library |
-|---|---|
-| GUI | PyQt5 |
-| Pose estimation | YOLOv11s-pose (`ultralytics`) |
-| Segmentation | YOLOv11s-seg |
-| Equipment detection | YOLOv11s-gymequipment |
-| Joint classifier | Custom Transformer (TF1 + TF2, PyTorch) |
-| Back curvature | XGBoost |
-| Video I/O | OpenCV |
-| Numerics | NumPy, SciPy |
+- macOS (Apple Silicon recommended — MPS acceleration)
+- Python 3.12 via [Anaconda](https://www.anaconda.com/)
 
-Inference runs on **MPS** (Apple Silicon) → CUDA → CPU, auto-detected at startup.
+```bash
+pip install -r requirements.txt
+```
+
+### Model files (not included)
+
+Place the following in the project root before running:
+
+```
+yolo_models/
+├── yolov11s-pose.pt
+├── yolov11s-seg.pt
+└── yolov11s-gymequipment.pt
+
+inference_models/
+├── tf1_best_fold1.pt
+├── tf2_best_fold1.pt
+├── xgb_rounded_fold5.json
+└── xgb_rounded_fold5_thr.txt
+```
+
+---
+
+## Usage
+
+**Terminal**
+```bash
+./run.sh
+```
+
+**macOS App**
+```bash
+./build_app.sh          # creates "Deadlift Diagnosis.app"
+open "Deadlift Diagnosis.app"
+```
+
+First launch: right-click → **Open** to bypass Gatekeeper.  
+Logs: `~/Library/Logs/DeadliftDiagnosis.log`
 
 ---
 
 ## Project Structure
 
 ```
-.
-├── appv1.2.py          # Main GUI application (current version)
-├── appv1.1.py          # Previous version
-├── appv1.0.py          # Initial version
-├── pipeline.py         # DiagnosisEngine — all model inference logic
-├── build_app.sh        # Builds "Deadlift Diagnosis.app" macOS bundle
-├── run.sh              # Quick terminal launcher
-├── requirements.txt    # Python dependencies
-├── materials/          # Icons and layout references
-├── raw_py/             # Training & data-preparation scripts
-│   ├── train_model.py
-│   ├── extract_keypoint.py
-│   ├── extract_backfeatures.py
-│   ├── build_inputdata.py
-│   └── ...
-├── yolo_models/        # ⚠ Not in repo — download separately
-└── inference_models/   # ⚠ Not in repo — download separately
+├── appv1.2.py          # GUI application
+├── pipeline.py         # Inference backend (DiagnosisEngine)
+├── build_app.sh        # macOS .app bundle builder
+├── run.sh              # Terminal launcher
+├── requirements.txt
+└── materials/          # App icons
 ```
 
 ---
 
-## Setup
+## Roadmap
 
-### Requirements
-
-- macOS (Apple Silicon recommended for MPS acceleration)
-- [Anaconda](https://www.anaconda.com/) / conda
-
-### Install dependencies
-
-```bash
-conda create -n deadlift python=3.12
-conda activate deadlift
-pip install -r requirements.txt
-```
-
-### Model files
-
-The YOLO and inference model files are not included in this repository due to size.  
-Place them as follows before running:
-
-```
-yolo_models/
-  yolov11s-pose.pt
-  yolov11s-seg.pt
-  yolov11s-gymequipment.pt
-
-inference_models/
-  tf1_best_fold1.pt
-  tf2_best_fold1.pt
-  xgb_rounded_fold5.json
-  xgb_rounded_fold5_thr.txt
-```
-
----
-
-## Running
-
-### Terminal
-
-```bash
-./run.sh
-# or
-/opt/anaconda3/bin/python appv1.2.py
-```
-
-### macOS App Bundle
-
-Build a double-clickable `.app` (runs in-place, no bundling of models):
-
-```bash
-./build_app.sh
-```
-
-Then double-click `Deadlift Diagnosis.app`.  
-First launch: right-click → **Open** to bypass Gatekeeper.
-
-Crash logs: `~/Library/Logs/DeadliftDiagnosis.log`
-
----
-
-## Versions
-
-| Version | Description |
-|---|---|
-| v1.0 | Initial working GUI |
-| v1.1 | UI redesign — dark OLED theme, financial dashboard palette |
-| v1.2 | Nose Trajectory chart synced with video playback; macOS .app packaging |
-| v2.0 *(planned)* | Windows `.exe` |
-| v3.0 *(planned)* | iPhone Safari web app |
-| v4.0 *(planned)* | Cross-browser (Chrome, Android) |
-
----
-
-## Classification Model
-
-Each rep is sampled at 20 evenly-spaced frames. Features extracted:
-
-- **f1** (30-dim): 12 normalised joint coordinates + 6 joint angles
-- **f3** (66-dim): output of TF1 Transformer encoder
-- **back** (3-dim): curvature `k`, orientation `o`, view angle `v` from segmentation mask
-
-**TF1 + TF2** (cross-attention Transformer) → hip / knee fault  
-**XGBoost** → rounded back fault
-
-Models were trained with 5-fold cross-validation; fold-5 checkpoint is used for inference.
+| Version | Target | Status |
+|---|---|---|
+| v1 | macOS desktop app | ✅ Done |
+| v2 | Windows `.exe` | Planned |
+| v3 | iPhone Safari web app | Planned |
+| v4 | Cross-browser (Chrome, Android) | Planned |

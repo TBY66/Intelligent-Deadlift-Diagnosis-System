@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 24
+names: ['Ab Wheel', 'Aerobic Stepper', 'Arm Curl', 'Assisted Chin Up/Dip', 'Back Extension', 'Barbell', 'Cable Machine', 'Chest Fly', 'Chest Press', 'Dumbbell', 'Gymball', 'Hip Abductor', 'Kettlebell', 'Lat Pulldown', 'Leg Extension', 'Leg Press', 'Lying Leg Curl', 'Person', 'Punching Bag', 'Shoulder Press', 'Smith Machine', 'Stationary Bike', 'T-Bar Row', 'Treadmill']
+
+roboflow:
+  workspace: raebyys-workspace
+  project: raebyys-workspace
+  version: dataset
+  license: Private
+  url: https://app.roboflow.com/raebyys-workspace/raebyys-workspace/dataset

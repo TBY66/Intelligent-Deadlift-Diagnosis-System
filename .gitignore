@@ -1,0 +1,28 @@
+# Models — too large for GitHub (download separately)
+yolo_models/
+inference_models/
+
+# Sample videos
+sample/
+
+# Built app bundle & generated icon
+Deadlift Diagnosis.app/
+AppIcon.icns
+AppIcon.iconset/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.env
+
+# macOS
+.DS_Store
+.AppleDouble
+
+# Logs
+*.log
+
+# Claude internal
+.claude/

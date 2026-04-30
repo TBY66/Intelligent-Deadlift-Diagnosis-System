@@ -1,9 +1,5 @@
-# Models — too large for GitHub (download separately)
-yolo_models/
-inference_models/
-
-# Sample videos
-sample/
+# feedback model — too large for GitHub (download separately)
+feedback_model/
 
 # Built app bundle & generated icon
 Deadlift Diagnosis.app/
@@ -23,6 +19,13 @@ __pycache__/
 
 # Logs
 *.log
+
+# Shell scripts
+*.sh
+
+# Old versions
+appv1.2.py
+pipelinev1.2.py
 
 # Claude internal
 .claude/

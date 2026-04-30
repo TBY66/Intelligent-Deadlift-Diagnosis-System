@@ -9,6 +9,14 @@ A desktop application for deadlift video analysis that detects repetitions, clas
 
 ---
 
+## Demo
+
+[![App demo preview](materials/app_demo_poster.png)](app_demo.mov)
+
+Click the preview image to open the full app demo video (`app_demo.mov`, about 21 seconds).
+
+---
+
 ## Overview
 
 This project combines a PyQt5 desktop UI with a multi-stage inference pipeline for deadlift assessment:
